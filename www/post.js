@@ -52,11 +52,14 @@ document.getElementById("debugimport").addEventListener("click", function () {
     const selected_file = evt.target.files[0];
     let my_zip = JSZip();
     let data = await my_zip.loadAsync(await selected_file.arrayBuffer());
-    for (let save of data.file(/^.+\.lsd$/)) {
+    for (let save of data.file(/^.+Save\d+\.lsd$/)) {
+      // macosx fix
+      if (save.name.match(/^.+(\/|\\)\._/) || save.name.match(/^\._/)) { continue; }
+      server_put_log(save.name)
       let contents = await save.async("uint8array");
       // let timestamp = new Date(save.date);
       // let obj = {mode: 33206, contents, timestamp}
-      let slot = parseInt(save.name.match(/\d+/)[0]);
+      let slot = parseInt(save.name.match(/^.+Save(\d+)\.lsd$/)[1]);
       let buf = easyrpgPlayer._malloc(contents.length);
       easyrpgPlayer.HEAPU8.set(contents, buf);
       easyrpgPlayer.api_private.uploadSavegameStep2(slot, buf, contents.length);
